@@ -1,7 +1,7 @@
 /* ===========================
-   USERS & AUTH
+   user & AUTH
    =========================== */
-CREATE TABLE users (
+CREATE TABLE user (
                        id            BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
                        email         VARCHAR(255) NOT NULL UNIQUE COMMENT '로그인/식별용 이메일(유니크)',
                        password      VARCHAR(255) NULL COMMENT 'BCrypt 해시(소셜 계정은 NULL 가능)',
@@ -16,7 +16,7 @@ CREATE TABLE users (
 
 CREATE TABLE user_address (
                               id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
-                              user_id     BIGINT NOT NULL COMMENT 'FK: users.id',
+                              user_id     BIGINT NOT NULL COMMENT 'FK: user.id',
                               recipient   VARCHAR(100) NOT NULL COMMENT '수령인 이름',
                               phone       VARCHAR(30)  NULL COMMENT '연락처',
                               zipcode     VARCHAR(20)  NULL COMMENT '우편번호',
@@ -28,7 +28,7 @@ CREATE TABLE user_address (
                               is_default  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '기본 배송지 여부(1/0)',
                               created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
                               updated_at  TIMESTAMP NULL COMMENT '수정 시각',
-                              CONSTRAINT fk_user_address_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                              CONSTRAINT fk_user_address_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) COMMENT='사용자 배송지';
 CREATE INDEX idx_user_address_user ON user_address(user_id);
 CREATE INDEX idx_user_address_default ON user_address(user_id, is_default);
@@ -77,20 +77,20 @@ CREATE TABLE product_image (
 CREATE INDEX idx_product_image_prod ON product_image(product_id, sort_order);
 
 CREATE TABLE product_like (
-                              user_id     BIGINT NOT NULL COMMENT 'FK: users.id',
+                              user_id     BIGINT NOT NULL COMMENT 'FK: user.id',
                               product_id  BIGINT NOT NULL COMMENT 'FK: product.id',
                               created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '좋아요 시각',
                               PRIMARY KEY (user_id, product_id),
-                              CONSTRAINT fk_like_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+                              CONSTRAINT fk_like_user    FOREIGN KEY (user_id)    REFERENCES user(id)    ON DELETE CASCADE,
                               CONSTRAINT fk_like_product FOREIGN KEY (product_id)  REFERENCES product(id)  ON DELETE CASCADE
 ) COMMENT='상품 좋아요(찜과 구분)';
 
 CREATE TABLE wishlist_item (
-                               user_id     BIGINT NOT NULL COMMENT 'FK: users.id',
+                               user_id     BIGINT NOT NULL COMMENT 'FK: user.id',
                                product_id  BIGINT NOT NULL COMMENT 'FK: product.id',
                                created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '추가 시각',
                                PRIMARY KEY (user_id, product_id),
-                               CONSTRAINT fk_wish_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+                               CONSTRAINT fk_wish_user    FOREIGN KEY (user_id)    REFERENCES user(id)    ON DELETE CASCADE,
                                CONSTRAINT fk_wish_product FOREIGN KEY (product_id)  REFERENCES product(id)  ON DELETE CASCADE
 ) COMMENT='위시리스트';
 
@@ -99,7 +99,7 @@ CREATE TABLE wishlist_item (
    =========================== */
 CREATE TABLE review (
                         id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
-                        user_id     BIGINT NOT NULL COMMENT 'FK: users.id',
+                        user_id     BIGINT NOT NULL COMMENT 'FK: user.id',
                         product_id  BIGINT NOT NULL COMMENT 'FK: product.id',
                         rating      TINYINT NOT NULL COMMENT '평점 1~5(앱 검증)',
                         title       VARCHAR(255) NULL COMMENT '리뷰 제목',
@@ -107,18 +107,18 @@ CREATE TABLE review (
                         like_count  INT NOT NULL DEFAULT 0 COMMENT '도움돼요 카운트',
                         created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성 시각',
                         updated_at  TIMESTAMP NULL COMMENT '수정 시각',
-                        CONSTRAINT fk_review_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+                        CONSTRAINT fk_review_user    FOREIGN KEY (user_id)    REFERENCES user(id)    ON DELETE CASCADE,
                         CONSTRAINT fk_review_product FOREIGN KEY (product_id)  REFERENCES product(id)  ON DELETE CASCADE,
                         CONSTRAINT uq_review_user_product UNIQUE (user_id, product_id)
 ) COMMENT='상품 리뷰(유저당 상품별 1건 정책)';
 CREATE INDEX idx_review_prod ON review(product_id);
 
 CREATE TABLE review_like (
-                             user_id    BIGINT NOT NULL COMMENT 'FK: users.id',
+                             user_id    BIGINT NOT NULL COMMENT 'FK: user.id',
                              review_id  BIGINT NOT NULL COMMENT 'FK: review.id',
                              created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '좋아요 시각',
                              PRIMARY KEY (user_id, review_id),
-                             CONSTRAINT fk_review_like_user   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+                             CONSTRAINT fk_review_like_user   FOREIGN KEY (user_id)   REFERENCES user(id)   ON DELETE CASCADE,
                              CONSTRAINT fk_review_like_review FOREIGN KEY (review_id) REFERENCES review(id)  ON DELETE CASCADE
 ) COMMENT='리뷰 좋아요';
 
@@ -128,14 +128,14 @@ CREATE TABLE review_like (
 CREATE TABLE orders (
                         id            BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
                         order_number  VARCHAR(50) NOT NULL UNIQUE COMMENT '표시/조회용 주문번호(유니크)',
-                        user_id       BIGINT NOT NULL COMMENT 'FK: users.id',
+                        user_id       BIGINT NOT NULL COMMENT 'FK: user.id',
                         status        VARCHAR(32) NOT NULL DEFAULT 'PENDING' COMMENT '주문 상태: PENDING|PAID|PREPARING|SHIPPED|DELIVERED|CANCELLED|REFUNDED',
                         total_amount  INT NOT NULL COMMENT '최종 결제 금액(원화 정수)',
                         currency      VARCHAR(3) NOT NULL DEFAULT 'KRW' COMMENT '통화 코드(ISO-4217)',
                         note          VARCHAR(500) NULL COMMENT '구매자 메모/요청사항',
                         ordered_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '주문 시각',
                         updated_at    TIMESTAMP NULL COMMENT '상태 변경 시각',
-                        CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+                        CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT
 ) COMMENT='주문';
 CREATE INDEX idx_orders_user ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
@@ -224,12 +224,12 @@ CREATE TABLE coupon (
 CREATE TABLE coupon_redemption (
                                    id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
                                    coupon_id   BIGINT NOT NULL COMMENT 'FK: coupon.id',
-                                   user_id     BIGINT NOT NULL COMMENT 'FK: users.id',
+                                   user_id     BIGINT NOT NULL COMMENT 'FK: user.id',
                                    order_id    BIGINT NULL COMMENT 'FK: orders.id(적용 시)',
                                    redeemed_at TIMESTAMP NULL COMMENT '사용 시각',
                                    status      VARCHAR(16) NOT NULL DEFAULT 'ISSUED' COMMENT '상태: ISSUED|REDEEMED|CANCELLED|EXPIRED',
                                    CONSTRAINT fk_coupon_redemption_coupon FOREIGN KEY (coupon_id) REFERENCES coupon(id) ON DELETE CASCADE,
-                                   CONSTRAINT fk_coupon_redemption_user   FOREIGN KEY (user_id)   REFERENCES users(id)  ON DELETE CASCADE,
+                                   CONSTRAINT fk_coupon_redemption_user   FOREIGN KEY (user_id)   REFERENCES user(id)  ON DELETE CASCADE,
                                    CONSTRAINT fk_coupon_redemption_order  FOREIGN KEY (order_id)  REFERENCES orders(id) ON DELETE SET NULL
 ) COMMENT='쿠폰 발급/사용 이력';
 CREATE UNIQUE INDEX uq_coupon_user_once ON coupon_redemption(coupon_id, user_id);
