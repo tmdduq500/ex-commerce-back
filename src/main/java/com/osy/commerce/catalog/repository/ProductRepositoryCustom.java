@@ -6,6 +6,6 @@ import com.osy.commerce.catalog.dto.ProductSearchCond;
 import org.springframework.data.domain.Page;
 
 public interface ProductRepositoryCustom {
-    Page<ProductListDto> searchProductList(ProductSearchCond cond);
-    ProductDetailDto searchProduct(Long id);
+    Page<ProductListDto> getProductList(ProductSearchCond cond);
+    ProductDetailDto getProduct(Long id);
 }

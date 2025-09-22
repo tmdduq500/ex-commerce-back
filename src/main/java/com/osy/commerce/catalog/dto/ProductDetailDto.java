@@ -1,12 +1,15 @@
 package com.osy.commerce.catalog.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class ProductDetailDto {
     private Long id;
     private String name;
