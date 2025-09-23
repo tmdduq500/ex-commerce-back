@@ -2,7 +2,9 @@ package com.osy.commerce.catalog.repository;
 
 import com.osy.commerce.catalog.dto.*;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,9 +37,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             default -> product.createdAt.desc();
         };
 
-        var thumbnailExpr = Expressions.stringTemplate(
-                "max(case when {0}=1 then {1} end)", productImage.isPrimary, productImage.imageUrl
-        );
+        StringExpression thumbCase =
+                new CaseBuilder()
+                        .when(productImage.isPrimary.isTrue()).then(productImage.imageUrl)
+                        .otherwise((String) null);
+
+        var thumbnailExpr = Expressions.stringTemplate("max({0})", thumbCase);
 
         List<ProductListDto> content = queryFactory
                 .select(new QProductListDto(
