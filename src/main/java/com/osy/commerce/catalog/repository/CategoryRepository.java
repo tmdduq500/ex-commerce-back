@@ -3,5 +3,5 @@ package com.osy.commerce.catalog.repository;
 import com.osy.commerce.catalog.domain.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CategoryRepository extends JpaRepository<Category, Integer> {
+public interface CategoryRepository extends JpaRepository<Category, Integer>, CategoryRepositoryCustom {
 }
