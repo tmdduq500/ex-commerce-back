@@ -1,6 +1,6 @@
 package com.osy.commerce.catalog.repository;
 
-import com.osy.commerce.catalog.dto.*;
+import com.osy.commerce.catalog.dto.product.*;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;

@@ -1,8 +1,8 @@
 package com.osy.commerce.catalog.service;
 
-import com.osy.commerce.catalog.dto.ProductDetailDto;
-import com.osy.commerce.catalog.dto.ProductListDto;
-import com.osy.commerce.catalog.dto.ProductSearchCond;
+import com.osy.commerce.catalog.dto.product.ProductDetailDto;
+import com.osy.commerce.catalog.dto.product.ProductListDto;
+import com.osy.commerce.catalog.dto.product.ProductSearchCond;
 import com.osy.commerce.catalog.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

@@ -1,8 +1,8 @@
 package com.osy.commerce.catalog.repository;
 
-import com.osy.commerce.catalog.dto.ProductDetailDto;
-import com.osy.commerce.catalog.dto.ProductListDto;
-import com.osy.commerce.catalog.dto.ProductSearchCond;
+import com.osy.commerce.catalog.dto.product.ProductDetailDto;
+import com.osy.commerce.catalog.dto.product.ProductListDto;
+import com.osy.commerce.catalog.dto.product.ProductSearchCond;
 import org.springframework.data.domain.Page;
 
 public interface ProductRepositoryCustom {

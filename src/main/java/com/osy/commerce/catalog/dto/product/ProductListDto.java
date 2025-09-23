@@ -1,4 +1,4 @@
-package com.osy.commerce.catalog.dto;
+package com.osy.commerce.catalog.dto.product;
 
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;

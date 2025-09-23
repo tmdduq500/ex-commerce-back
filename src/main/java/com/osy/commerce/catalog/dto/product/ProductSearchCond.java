@@ -1,4 +1,4 @@
-package com.osy.commerce.catalog.dto;
+package com.osy.commerce.catalog.dto.product;
 
 import lombok.Getter;
 import lombok.Setter;
