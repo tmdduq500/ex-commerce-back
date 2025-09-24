@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -23,19 +25,30 @@ public class User extends BaseEntity {
     private String email;
 
     @Column
+    private String name;
+
+    @Column
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private String role;
+    private Role role;
 
-    @Column(length = 32)
-    private String provider;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AuthProvider provider;
 
-    @Column(name = "provider_id")
+    @Column(name = "provider_id", length = 100)
     private String providerId;
 
     @Column(nullable = false, length = 32)
-    private String status;
+    private UserStatus status;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
+    private Set<Role> roles = new HashSet<>();
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
