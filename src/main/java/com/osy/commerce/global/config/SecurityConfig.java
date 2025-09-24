@@ -1,5 +1,8 @@
 package com.osy.commerce.global.config;
 
+import com.osy.commerce.global.security.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,10 +14,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtFilter;
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -24,38 +31,33 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // REST API 보안 기본
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-
                 .authorizeHttpRequests(auth -> auth
-                        // Actuator
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/categories/**").permitAll()
+                        .requestMatchers("/actuator/health","/actuator/info").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
-
-                        // Swagger
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").denyAll()
-
-                        // 인증/헬스체크
-                        .requestMatchers("/api/health").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll() // 로그인/토큰 발급은 공개 엔드포인트
-
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-
-                        // 나머지는 인증 필수
+                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**").denyAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"code\":\"AUTH_ERROR\",\"message\":\"인증이 필요합니다\"}");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"code\":\"ACCESS_DENIED\",\"message\":\"권한이 없습니다\"}");
+                        })
                 );
 
-        // 예외 처리
-        // http.exceptionHandling(ex -> ex
-        //     .authenticationEntryPoint((req, res, e) -> res.sendError(401))
-        //     .accessDeniedHandler((req, res, e) -> res.sendError(403))
-        // );
-
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
