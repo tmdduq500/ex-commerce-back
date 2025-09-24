@@ -14,3 +14,21 @@ INSERT INTO product_image(product_id, image_url, is_primary, sort_order, created
 SELECT p.id, 'https://picsum.photos/seed/phone/800/800', 1, 0, NOW()
 FROM product p WHERE p.name='샘플 폰'
     ON DUPLICATE KEY UPDATE image_url=VALUES(image_url);
+
+
+-- children seed for electronics
+INSERT INTO category (parent_id, name, slug, depth, created_at)
+SELECT c.id, '모바일', 'mobile', c.depth + 1, NOW()
+FROM category c WHERE c.slug = 'electronics'
+ON DUPLICATE KEY UPDATE name = VALUES(name), depth = VALUES(depth);
+
+INSERT INTO category (parent_id, name, slug, depth, created_at)
+SELECT c.id, '노트북', 'laptop', c.depth + 1, NOW()
+FROM category c WHERE c.slug = 'electronics'
+ON DUPLICATE KEY UPDATE name = VALUES(name), depth = VALUES(depth);
+
+-- 모바일 하위까지 테스트 (grandchild)
+INSERT INTO category (parent_id, name, slug, depth, created_at)
+SELECT p.id, '안드로이드', 'android', p.depth + 1, NOW()
+FROM category p WHERE p.slug = 'mobile'
+ON DUPLICATE KEY UPDATE name = VALUES(name), depth = VALUES(depth);
