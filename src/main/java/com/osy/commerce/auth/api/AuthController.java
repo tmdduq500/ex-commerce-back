@@ -3,20 +3,18 @@ package com.osy.commerce.auth.api;
 import com.osy.commerce.auth.dto.LoginRequest;
 import com.osy.commerce.auth.dto.RefreshRequest;
 import com.osy.commerce.auth.dto.SignupRequest;
-import com.osy.commerce.auth.dto.TokenPairResponse;
 import com.osy.commerce.auth.service.AuthService;
+import com.osy.commerce.global.response.ApiCode;
 import com.osy.commerce.global.response.ApiResponse;
-import com.osy.commerce.global.security.jwt.JwtTokenProvider;
-import com.osy.commerce.global.security.jwt.RefreshTokenStore;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import com.osy.commerce.global.response.Responses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -24,33 +22,29 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final RefreshTokenStore refreshTokenStore;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok(authService.signup(req)));
+    public ResponseEntity<ApiResponse> signup(@Valid @RequestBody SignupRequest req) {
+        return Responses.ok(authService.signup(req));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok(authService.login(req)));
+    public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest req) {
+        return Responses.ok(authService.login(req));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody RefreshRequest req) {
-        TokenPairResponse res = authService.refreshByToken(req.getRefreshToken());
-        return ResponseEntity.ok(ApiResponse.ok(res));
+    public ResponseEntity<ApiResponse> refresh(@Valid @RequestBody RefreshRequest req) {
+        return Responses.ok(authService.refreshByToken(req.getRefreshToken()));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(Authentication auth) {
+    public ResponseEntity<ApiResponse> logout(Authentication auth) {
         if (auth == null || auth.getPrincipal() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_ERROR", "인증 필요"));
+            return Responses.error(ApiCode.AUTH_REQUIRED, null);
         }
         Long userId = (Long) auth.getPrincipal();
         authService.logout(userId);
-        return ResponseEntity.ok(ApiResponse.ok("OK"));
+        return Responses.ok("OK");
     }
 }
-

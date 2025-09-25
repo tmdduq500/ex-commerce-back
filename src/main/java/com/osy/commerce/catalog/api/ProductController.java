@@ -1,13 +1,14 @@
 package com.osy.commerce.catalog.api;
 
-import com.osy.commerce.catalog.dto.product.ProductDetailDto;
 import com.osy.commerce.catalog.dto.product.ProductListDto;
 import com.osy.commerce.catalog.dto.product.ProductSearchCond;
 import com.osy.commerce.catalog.service.ProductService;
 import com.osy.commerce.global.response.ApiResponse;
 import com.osy.commerce.global.response.PageResponse;
+import com.osy.commerce.global.response.Responses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,13 +22,14 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping("/products")
-    public ApiResponse<PageResponse<ProductListDto>> getProductList(ProductSearchCond cond) {
+    public ResponseEntity<ApiResponse> getProductList(ProductSearchCond cond) {
         Page<ProductListDto> page = productService.getProductList(cond);
-        return ApiResponse.ok(PageResponse.from(page));
+        return Responses.ok(PageResponse.from(page));
     }
 
     @GetMapping("/products/{id}")
-    public ApiResponse<ProductDetailDto> getProduct(@PathVariable Long id) {
-        return ApiResponse.ok(productService.getProduct(id));
+    public ResponseEntity<ApiResponse> getProduct(@PathVariable Long id) {
+        return Responses.ok(productService.getProduct(id));
     }
+
 }

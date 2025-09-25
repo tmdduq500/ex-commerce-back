@@ -1,44 +1,87 @@
 package com.osy.commerce.global.error;
 
+import com.osy.commerce.global.response.ApiCode;
 import com.osy.commerce.global.response.ApiResponse;
+import com.osy.commerce.global.response.Responses;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 로그인 실패 / 유효하지 않은 자격 등
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse> handleApi(ApiException e) {
+        return Responses.error(e.getCode(), e.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<?>> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("BAD_CREDENTIALS", e.getMessage()));
+    public ResponseEntity<ApiResponse> handleIllegalArgument(IllegalArgumentException e) {
+        return Responses.error(ApiCode.BAD_CREDENTIALS, e.getMessage());
     }
 
-    // @Valid 바인딩 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
-        String msg = e.getBindingResult().getAllErrors().stream()
-                .findFirst().map(DefaultMessageSourceResolvable::getDefaultMessage).orElse("Validation error");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("ERR_VALID", msg));
+    public ResponseEntity<ApiResponse> handleBind(MethodArgumentNotValidException e) {
+        List<ValidationError> errors = e.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ValidationError(
+                        fe.getField(), null, fe.getCode(),
+                        fe.getDefaultMessage(), fe.getRejectedValue()))
+                .toList();
+        return Responses.error(ApiCode.VALIDATION_ERROR,
+                ApiCode.VALIDATION_ERROR.getDefaultMessage(),
+                Map.of("errors", errors));
     }
 
-    // Bean Validation (@Validated) 등
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<?>> handleConstraintViolation(ConstraintViolationException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("ERR_VALID", e.getMessage()));
+    public ResponseEntity<ApiResponse> handleConstraint(ConstraintViolationException e) {
+        List<ValidationError> errors = e.getConstraintViolations().stream()
+                .map(cv -> new ValidationError(
+                        null,
+                        cv.getPropertyPath() != null ? cv.getPropertyPath().toString() : null,
+                        cv.getConstraintDescriptor() != null
+                                ? cv.getConstraintDescriptor().getAnnotation().annotationType().getSimpleName()
+                                : null,
+                        cv.getMessage(),
+                        cv.getInvalidValue()))
+                .toList();
+        return Responses.error(ApiCode.VALIDATION_ERROR,
+                ApiCode.VALIDATION_ERROR.getDefaultMessage(),
+                Map.of("errors", errors));
     }
 
-    // 그 외 서버 오류
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        ValidationError ve = new ValidationError(
+                null, e.getName(), "TypeMismatch",
+                "파라미터 타입이 올바르지 않습니다.", e.getValue());
+        return Responses.error(ApiCode.VALIDATION_ERROR,
+                ApiCode.VALIDATION_ERROR.getDefaultMessage(),
+                Map.of("errors", List.of(ve)));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse> handleNotReadable(HttpMessageNotReadableException e) {
+        return Responses.error(ApiCode.VALIDATION_ERROR, "요청 본문을 읽을 수 없습니다.", null);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse> handleAccessDenied(AccessDeniedException e) {
+        return Responses.error(ApiCode.ACCESS_DENIED, e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleGeneric(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("INTERNAL_ERROR", "일시적인 오류가 발생했습니다"));
+    public ResponseEntity<ApiResponse> handleGeneric(Exception e) {
+        log.error("Unhandled exception", e);
+        return Responses.error(ApiCode.INTERNAL_ERROR, null);
     }
 }

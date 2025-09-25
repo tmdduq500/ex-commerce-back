@@ -14,8 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +69,8 @@ public class AuthService {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
+        user.setLastLoginAt(LocalDateTime.now());
+
         String access = jwt.createAccessToken(
                 user.getId(),
                 java.util.List.of(new SimpleGrantedAuthority(user.getRole().name()))
@@ -94,7 +96,7 @@ public class AuthService {
 
         String newAccess = jwt.createAccessToken(user.getId(),
                 java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(user.getRole().name())));
-        String newRefresh = UUID.randomUUID().toString(); // 회전
+        String newRefresh = UUID.randomUUID().toString();
         refreshStore.save(user.getId(), newRefresh, jwt.getRefreshExpSeconds());
 
         return new TokenPairResponse(newAccess, jwt.getAccessExpSeconds(), newRefresh, jwt.getRefreshExpSeconds());
