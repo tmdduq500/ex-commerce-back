@@ -2,16 +2,16 @@
    user & AUTH
    =========================== */
 CREATE TABLE user (
-                       id            BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
-                       email         VARCHAR(255) NOT NULL UNIQUE COMMENT '로그인/식별용 이메일(유니크)',
-                       password      VARCHAR(255) NULL COMMENT 'BCrypt 해시(소셜 계정은 NULL 가능)',
-                       role          VARCHAR(32)  NOT NULL DEFAULT 'ROLE_USER' COMMENT '권한: ROLE_USER | ROLE_ADMIN 등',
-                       provider      VARCHAR(32)  NULL COMMENT '인증 제공자: local | google | github ...',
-                       provider_id   VARCHAR(255) NULL COMMENT '소셜 계정 식별자(서브 키)',
-                       status        VARCHAR(32)  NOT NULL DEFAULT 'ACTIVE' COMMENT '계정 상태: ACTIVE | BLOCKED | DELETED ...',
-                       last_login_at TIMESTAMP NULL COMMENT '마지막 로그인 시간',
-                       created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
-                       updated_at    TIMESTAMP NULL COMMENT '수정 시각'
+                      id            BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
+                      email         VARCHAR(255) NOT NULL UNIQUE COMMENT '로그인/식별용 이메일(유니크)',
+                      password      VARCHAR(255) NULL COMMENT 'BCrypt 해시(소셜 계정은 NULL 가능)',
+                      role          VARCHAR(32)  NOT NULL DEFAULT 'ROLE_USER' COMMENT '권한: ROLE_USER | ROLE_ADMIN 등',
+                      provider      VARCHAR(32)  NULL COMMENT '인증 제공자: local | google | github ...',
+                      provider_id   VARCHAR(255) NULL COMMENT '소셜 계정 식별자(서브 키)',
+                      status        VARCHAR(32)  NOT NULL DEFAULT 'ACTIVE' COMMENT '계정 상태: ACTIVE | BLOCKED | DELETED ...',
+                      last_login_at TIMESTAMP NULL COMMENT '마지막 로그인 시간',
+                      created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시각',
+                      updated_at    TIMESTAMP NULL COMMENT '수정 시각'
 ) COMMENT='사용자 계정';
 
 CREATE TABLE user_address (
@@ -249,3 +249,14 @@ CREATE TABLE stock_txn (
                            CONSTRAINT fk_stock_txn_order_item FOREIGN KEY (order_item_id) REFERENCES order_item(id) ON DELETE SET NULL
 ) COMMENT='재고 변경 트랜잭션 로그';
 CREATE INDEX idx_stock_txn_product ON stock_txn(product_id);
+
+/* ===========================
+   EXTRA SAFETY CONSTRAINTS (idempotency for seeds)
+   =========================== */
+-- 제품명 유니크(샘플 시드가 name으로 참조될 때 중복 방지)
+ALTER TABLE product
+    ADD UNIQUE KEY IF NOT EXISTS uq_product_name (name);
+
+-- 대표 이미지/정렬 기준 유니크 (product_id + sort_order)
+ALTER TABLE product_image
+    ADD UNIQUE KEY IF NOT EXISTS uq_product_image_main (product_id, sort_order);
