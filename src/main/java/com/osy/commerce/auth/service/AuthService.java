@@ -1,6 +1,8 @@
 package com.osy.commerce.auth.service;
 
 import com.osy.commerce.auth.dto.*;
+import com.osy.commerce.global.error.ApiException;
+import com.osy.commerce.global.response.ApiCode;
 import com.osy.commerce.global.security.jwt.JwtTokenProvider;
 import com.osy.commerce.global.security.jwt.RefreshTokenStore;
 import com.osy.commerce.user.domain.AuthProvider;
@@ -29,8 +31,9 @@ public class AuthService {
 
     public LoginResponse signup(SignupRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+            throw new ApiException(ApiCode.EMAIL_DUPLICATE, "이미 가입된 이메일입니다.");
         }
+
         User user = User.builder()
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
@@ -64,9 +67,10 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new ApiException(ApiCode.BAD_CREDENTIALS, "가입되지 않은 이메일입니다."));
+
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new ApiException(ApiCode.BAD_CREDENTIALS, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         user.setLastLoginAt(LocalDateTime.now());

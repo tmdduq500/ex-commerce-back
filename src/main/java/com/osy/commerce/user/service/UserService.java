@@ -1,5 +1,7 @@
 package com.osy.commerce.user.service;
 
+import com.osy.commerce.global.error.ApiException;
+import com.osy.commerce.global.response.ApiCode;
 import com.osy.commerce.global.security.jwt.RefreshTokenStore;
 import com.osy.commerce.user.domain.User;
 import com.osy.commerce.user.dto.UserProfileDto;
@@ -34,9 +36,9 @@ public class UserService {
     @Transactional
     public void changePassword(Long userId, String current, String next) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+                .orElseThrow(() -> new ApiException(ApiCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
         if (!passwordEncoder.matches(current, user.getPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            throw new ApiException(ApiCode.BAD_CREDENTIALS, "현재 비밀번호가 일치하지 않습니다.");
         }
         user.setPassword(passwordEncoder.encode(next));
         refreshTokenStore.deleteByUser(userId);
