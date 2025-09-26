@@ -1,85 +1,138 @@
 package com.osy.commerce.global.security.jwt;
 
+import com.osy.commerce.user.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.time.Duration;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Getter
-    private final long accessExpSeconds;
-    @Getter
-    private final long refreshExpSeconds;
-    private final Key key;
+    @Value("${jwt.secret}")
+    private String secret;
 
-    public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-exp-seconds}") long accessExpSeconds,
-            @Value("${jwt.refresh-exp-seconds}") long refreshExpSeconds
-    ) {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+    @Value("${jwt.access-ttl-seconds:3600}")
+    private long accessTtlSeconds;
+
+    @Value("${jwt.refresh-ttl-seconds:604800}")
+    private long refreshTtlSeconds;
+
+    private Key key;
+
+    @Getter
+    private long accessExpSeconds;
+    @Getter
+    private long refreshExpSeconds;
+
+    @jakarta.annotation.PostConstruct
+    void init() {
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (IllegalArgumentException e) {
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes);
-        this.accessExpSeconds = accessExpSeconds;
-        this.refreshExpSeconds = refreshExpSeconds;
+        this.accessExpSeconds = accessTtlSeconds;
+        this.refreshExpSeconds = refreshTtlSeconds;
     }
 
-    public String createAccessToken(Long userId, Collection<? extends GrantedAuthority> authorities) {
-        String roles = authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
+    /** 다중 Role → AccessToken 생성 */
+    public String createAccessToken(Long userId, Set<Role> roles) {
+        String authClaim = Optional.ofNullable(roles)
+                .orElseGet(Set::of)
+                .stream().map(Role::name).distinct().sorted()
+                .collect(Collectors.joining(","));
+
         Date now = new Date();
-        Date exp = new Date(now.getTime() + accessExpSeconds * 1000);
+        Date exp = new Date(now.getTime() + Duration.ofSeconds(accessTtlSeconds).toMillis());
+
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
-                .claim("auth", roles)
+                .claim("auth", authClaim)
                 .setIssuedAt(now)
                 .setExpiration(exp)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    /** 토큰에서 userId(subject) 추출 */
+    public Long getUserId(String token) {
+        Claims c = parseClaims(token);
+        String sub = c.getSubject();
+        if (!StringUtils.hasText(sub)) return null;
+        try {
+            return Long.parseLong(sub);
+        } catch (NumberFormatException e) {
+            log.warn("Invalid JWT subject: {}", sub);
+            return null;
+        }
+    }
+
+    /** 만료된 토큰이어도 userId가 필요할 때 사용( */
+    public Long getUserIdAllowExpired(String token) {
+        try {
+            return getUserId(token);
+        } catch (ExpiredJwtException eje) {
+            String sub = eje.getClaims().getSubject();
+            try {
+                return Long.parseLong(sub);
+            } catch (Exception ignore) {
+                return null;
+            }
+        }
+    }
+
     public boolean validate(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            parseClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
-    public Claims parse(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+    public List<SimpleGrantedAuthority> getAuthorities(String token) {
+        Claims c = parseClaims(token);
+        String auth = c.get("auth", String.class);
+        if (!StringUtils.hasText(auth)) return List.of();
+
+        return Arrays.stream(auth.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .map(org.springframework.security.core.authority.SimpleGrantedAuthority::new)
+                .toList();
     }
 
-    public Long getUserId(String token) {
-        return Long.valueOf(parse(token).getSubject());
+    public Claims parseClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(this.key)
+                .build()
+                .parseClaimsJws(token)   // 유효성 + 서명 검증
+                .getBody();
     }
 
-    // 만료된 토큰이어도 subject(userId)만 꺼내기
-    public Long getUserIdAllowExpired(String token) {
+    public Claims parseClaimsAllowExpired(String token) {
         try {
-            return getUserId(token);
-        } catch (ExpiredJwtException e) {
-            return Long.valueOf(e.getClaims().getSubject());
+            return parseClaims(token);
+        } catch (ExpiredJwtException eje) {
+            return eje.getClaims();
         }
     }
-
-
-    public Collection<? extends GrantedAuthority> getAuthorities(String token) {
-        String auth = (String) parse(token).get("auth");
-        if (auth == null || auth.isBlank()) return Collections.emptyList();
-        return Arrays.stream(auth.split(",")).map(SimpleGrantedAuthority::new).toList();
-    }
-
 }

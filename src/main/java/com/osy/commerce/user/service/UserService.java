@@ -11,6 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,11 +27,16 @@ public class UserService {
     public UserProfileDto getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+
+        Set<String> roles = user.getRoles().stream()
+                .map(Enum::name)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
         return new UserProfileDto(
                 user.getId(),
                 user.getEmail(),
                 user.getName(),
-                user.getRole().name(),
+                roles,
                 user.getStatus().name(),
                 user.getLastLoginAt()
         );

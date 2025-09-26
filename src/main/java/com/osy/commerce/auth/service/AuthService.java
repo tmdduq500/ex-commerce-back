@@ -11,13 +11,15 @@ import com.osy.commerce.user.domain.User;
 import com.osy.commerce.user.domain.UserStatus;
 import com.osy.commerce.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,20 +40,21 @@ public class AuthService {
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .name(req.getName())
-                .role(Role.ROLE_USER)
                 .status(UserStatus.ACTIVE)
                 .provider(AuthProvider.LOCAL)
                 .providerId(null)
                 .lastLoginAt(null)
                 .build();
+        user.addRole(Role.ROLE_USER);
         userRepository.save(user);
 
-        String access = jwt.createAccessToken(
-                user.getId(),
-                java.util.List.of(new SimpleGrantedAuthority(user.getRole().name()))
-        );
+        String access = jwt.createAccessToken(user.getId(), user.getRoles());
         String refresh = UUID.randomUUID().toString();
         refreshStore.save(user.getId(), refresh, jwt.getRefreshExpSeconds());
+
+        Set<String> roles = user.getRoles().stream()
+                .map(Enum::name)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         return new LoginResponse(
                 access, jwt.getAccessExpSeconds(),
@@ -60,7 +63,7 @@ public class AuthService {
                         user.getId(),
                         user.getEmail(),
                         user.getName(),
-                        java.util.Set.of(user.getRole().name())
+                        roles
                 )
         );
     }
@@ -75,19 +78,23 @@ public class AuthService {
 
         user.setLastLoginAt(LocalDateTime.now());
 
-        String access = jwt.createAccessToken(
-                user.getId(),
-                java.util.List.of(new SimpleGrantedAuthority(user.getRole().name()))
-        );
+        String access = jwt.createAccessToken(user.getId(), user.getRoles());
         String refresh = UUID.randomUUID().toString();
         refreshStore.save(user.getId(), refresh, jwt.getRefreshExpSeconds());
+
+        Set<String> roles = user.getRoles().stream()
+                .map(Enum::name)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         return new LoginResponse(
                 access, jwt.getAccessExpSeconds(),
                 refresh, jwt.getRefreshExpSeconds(),
                 new UserInfo(
-                        user.getId(), user.getEmail(), user.getName(),
-                        java.util.Set.of(user.getRole().name()))
+                        user.getId(),
+                        user.getEmail(),
+                        user.getName(),
+                        roles
+                )
         );
     }
 
@@ -98,8 +105,7 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
-        String newAccess = jwt.createAccessToken(user.getId(),
-                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(user.getRole().name())));
+        String newAccess = jwt.createAccessToken(user.getId(), user.getRoles());
         String newRefresh = UUID.randomUUID().toString();
         refreshStore.save(user.getId(), newRefresh, jwt.getRefreshExpSeconds());
 

@@ -31,10 +31,6 @@ public class User extends BaseEntity {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private AuthProvider provider;
 
@@ -44,12 +40,20 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 32)
     private UserStatus status;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "role")
+    @Column(name = "role", nullable = false, length = 32)
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    public void addRole(Role r) {
+        this.roles.add(r);
+    }
+
+    public boolean hasRole(Role r) {
+        return this.roles != null && this.roles.contains(r);
+    }
 }
