@@ -12,8 +12,16 @@ public class Responses {
         return wrap(ApiCode.OK, data);
     }
 
+    public static ResponseEntity<ApiResponse> ok() {
+        return wrap(ApiCode.OK, null);
+    }
+
     public static ResponseEntity<ApiResponse> created() {
         return wrap(ApiCode.CREATED, null);
+    }
+
+    public static ResponseEntity<ApiResponse> created(Object data) {
+        return wrap(ApiCode.CREATED, data);
     }
 
     public static ResponseEntity<ApiResponse> error(ApiCode code, String message) {
