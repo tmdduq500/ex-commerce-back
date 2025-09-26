@@ -54,8 +54,8 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
     // Flyway
-    implementation 'org.flywaydb:flyway-core'
-    implementation 'org.flywaydb:flyway-mysql'
+    implementation 'org.flywaydb:flyway-core:11.9.1'
+    implementation 'org.flywaydb:flyway-mysql:11.9.1'
 
     // Spring Boot Actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
