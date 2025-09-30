@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -46,4 +48,21 @@ public class Orders extends BaseEntity {
 
     @Column(name = "ordered_at", nullable = false)
     private LocalDateTime orderedAt;
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private OrderAddress orderAddress;
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
+
+    public void setOrderAddress(OrderAddress oa) {
+        this.orderAddress = oa;
+        if (oa != null && oa.getOrder() != this) oa.setOrder(this);
+    }
+
+    public void addItem(OrderItem item) {
+        this.items.add(item);
+        if (item.getOrder() != this) item.setOrder(this);
+    }
+
 }
