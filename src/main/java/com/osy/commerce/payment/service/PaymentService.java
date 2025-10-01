@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -39,10 +40,14 @@ public class PaymentService {
 
     @Transactional
     public PaymentConfirmResponse confirmPayment(Long userId, PaymentConfirmRequest req, String idempotencyKey) {
-        String idemKey = "PAYMENT_CONFIRM:" + idempotencyKey;
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new ApiException(ApiCode.VALIDATION_ERROR, "Idempotency-Key 헤더가 필요합니다.");
+        }
+        final String idemKey = "PAYMENT_CONFIRM:" + req.getOrderId() + ":" + idempotencyKey;
 
-        Boolean lock = redisTemplate.opsForValue().setIfAbsent(idemKey, "LOCK", Duration.ofMinutes(5));
-        if (Boolean.FALSE.equals(lock)) {
+        // 멱등 락 (중복 실행 방지)
+        Boolean locked = redisTemplate.opsForValue().setIfAbsent(idemKey, "LOCK", Duration.ofMinutes(5));
+        if (Boolean.FALSE.equals(locked)) {
             throw new ApiException(ApiCode.CONFLICT, "중복 결제 요청입니다.");
         }
 
@@ -53,7 +58,11 @@ public class PaymentService {
                 throw new ApiException(ApiCode.CONFLICT, "결제할 수 없는 주문 상태입니다.");
             }
 
+            // 결제 조회
             Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+            if (payment != null && payment.getStatus() == PaymentStatus.PAID) {
+                return PaymentConfirmResponse.from(order, payment);
+            }
             if (payment == null) {
                 payment = Payment.builder()
                         .order(order)
@@ -61,50 +70,57 @@ public class PaymentService {
                         .method(req.getMethod())
                         .provider(req.getProvider())
                         .merchantUid(order.getOrderNumber())
-                        .amount(order.getTotalAmount())
+                        .amount(order.getTotalAmount()) // total_amount = 최종 결제금액
                         .build();
             }
 
-            if (payment.getStatus() == PaymentStatus.PAID) {
-                return PaymentConfirmResponse.from(order, payment);
-            }
+            // 주문 아이템 조회
+            List<OrderItem> items = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId());
 
-            payment.setStatus(PaymentStatus.PAID);
-            payment.setApprovedAt(LocalDateTime.now());
-            if (payment.getPgTid() == null) {
-                payment.setPgTid("PG-" + System.currentTimeMillis());
-            }
-            paymentRepository.save(payment);
+            items.sort(Comparator.comparing(oi -> oi.getProduct().getId()));
 
-            order.setStatus(OrderStatus.PAID);
-            ordersRepository.save(order);
+            // 재고 차감
+            for (OrderItem item : items) {
+                Long productId = item.getProduct().getId();
 
-            List<OrderItem> orderItems = orderItemRepository.findByOrder(order)
-                    .orElseThrow(() -> new ApiException(ApiCode.NOT_FOUND, "주문을 찾을 수 없습니다."));
+                Product product = productRepository.findWithPessimisticLockById(productId)
+                        .orElseThrow(() -> new ApiException(ApiCode.NOT_FOUND, "상품이 존재하지 않습니다: " + productId));
 
-            for (OrderItem item : orderItems) {
-                Product product = item.getProduct();
-                int newStock = product.getStock() - item.getQuantity();
-                if (newStock < 0) {
-                    throw new ApiException(ApiCode.CONFLICT, "재고 부족: " + product.getId());
+                int remain = product.getStock();
+                int need   = item.getQuantity();
+                if (remain < need) {
+                    throw new ApiException(ApiCode.CONFLICT, "재고 부족: " + productId);
                 }
-                product.setStock(newStock);
+
+                product.setStock(remain - need);
                 productRepository.save(product);
 
                 stockTxnRepository.save(StockTxn.builder()
                         .product(product)
                         .orderItem(item)
-                        .delta(-item.getQuantity())
+                        .delta(-need)
                         .reason("ORDER")
                         .memo("Order #" + order.getOrderNumber())
                         .createdAt(LocalDateTime.now())
                         .build());
             }
 
+            // 결제 확정 및 주문 상태 변경
+            payment.setStatus(PaymentStatus.PAID);
+            if (payment.getPgTid() == null) {
+                payment.setPgTid("PG-" + System.currentTimeMillis());
+            }
+            payment.setApprovedAt(LocalDateTime.now());
+            payment.setFailedReason(null);
+            paymentRepository.save(payment);
+
+            order.setStatus(OrderStatus.PAID);
+            ordersRepository.save(order);
+
             return PaymentConfirmResponse.from(order, payment);
 
         } finally {
-            redisTemplate.opsForValue().set(idemKey, "DONE", Duration.ofMinutes(5));
+            redisTemplate.opsForValue().set(idemKey, "DONE", Duration.ofMinutes(30));
         }
     }
 
