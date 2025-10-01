@@ -2,7 +2,6 @@ package com.osy.commerce.order.service;
 
 import com.osy.commerce.catalog.domain.Product;
 import com.osy.commerce.catalog.repository.ProductRepository;
-import com.osy.commerce.catalog.repository.ProductRepositoryImpl;
 import com.osy.commerce.global.error.ApiException;
 import com.osy.commerce.global.response.ApiCode;
 import com.osy.commerce.order.domain.OrderAddress;
@@ -84,7 +83,7 @@ public class OrderService {
 
     // ===== Create =====
     @Transactional
-    public OrderResponse create(Long userId, CreateOrderRequest req) {
+    public OrderResponse createOrder(Long userId, CreateOrderRequest req) {
         OrderPreviewResponse pv = preview(userId, toPreview(req));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
@@ -130,14 +129,14 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse get(Long userId, Long orderId) {
+    public OrderResponse getOrder(Long userId, Long orderId) {
         Orders o = ordersRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new ApiException(ApiCode.NOT_FOUND, "주문을 찾을 수 없습니다."));
         return OrderResponse.from(o);
     }
 
     @Transactional
-    public List<OrderResponse> list(Long userId) {
+    public List<OrderResponse> getOrderList(Long userId) {
         return ordersRepository.findAllByUserIdOrderByIdDesc(userId)
                 .stream().map(OrderResponse::from).toList();
     }
