@@ -6,6 +6,7 @@ import com.osy.commerce.order.domain.Orders;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -17,23 +18,47 @@ public class OrderResponse {
     private Long id;
     private String orderNumber;
     private String status;
-    private int totalAmount;
-    private int payableAmount;
-    private LocalDateTime createdAt;
+    private Integer totalAmount;
+    private LocalDateTime orderedAt;
+
     private Address address;
     private List<Item> items;
 
-    public static OrderResponse from(Orders o) {
+    public static OrderResponse from(Orders o, OrderAddress oa, List<OrderItem> orderItems) {
         return OrderResponse.builder()
                 .id(o.getId())
                 .orderNumber(o.getOrderNumber())
-                .status(o.getStatus())
+                .status(o.getStatus() != null ? o.getStatus().name() : null)
                 .totalAmount(o.getTotalAmount())
-                .payableAmount(o.getTotalAmount())
-                .createdAt(o.getCreatedAt())
-                .address(Address.from(o.getOrderAddress())) // ← 1:1 스냅샷 사용
-                .items(o.getItems().stream().map(Item::from).toList())
+                .orderedAt(o.getOrderedAt())
+                .address(Address.from(oa))
+                .items(orderItems == null ? Collections.emptyList()
+                        : orderItems.stream().map(Item::from).toList())
                 .build();
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Address {
+        private String recipient;
+        private String phone;
+        private String zipcode;
+        private String address1;
+        private String address2;
+
+        public static Address from(OrderAddress oa) {
+            if (oa == null) return null;
+            return Address.builder()
+                    .recipient(oa.getRecipient())
+                    .phone(oa.getPhone())
+                    .zipcode(oa.getZipcode())
+                    .address1(oa.getAddress1())
+                    .address2(oa.getAddress2())
+                    .build();
+        }
     }
 
     @Getter
@@ -44,9 +69,9 @@ public class OrderResponse {
     public static class Item {
         private Long productId;
         private String name;
-        private int unitPrice;
-        private int qty;
-        private int lineTotal;
+        private Integer unitPrice;
+        private Integer qty;
+        private Integer lineTotal;
 
         public static Item from(OrderItem oi) {
             return Item.builder()
@@ -55,29 +80,6 @@ public class OrderResponse {
                     .unitPrice(oi.getUnitPrice())
                     .qty(oi.getQuantity())
                     .lineTotal(oi.getLineAmount())
-                    .build();
-        }
-    }
-
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class Address {
-        private String receiverName;
-        private String receiverPhone;
-        private String postalCode;
-        private String address1;
-        private String address2;
-
-        public static Address from(OrderAddress oa) {
-            return Address.builder()
-                    .receiverName(oa.getRecipient())
-                    .receiverPhone(oa.getPhone())
-                    .postalCode(oa.getZipcode())
-                    .address1(oa.getAddress1())
-                    .address2(oa.getAddress2())
                     .build();
         }
     }

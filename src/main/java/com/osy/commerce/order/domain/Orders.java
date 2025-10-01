@@ -35,7 +35,7 @@ public class Orders extends BaseEntity {
     private User user;
 
     @Column(nullable = false, length = 32)
-    private String status;
+    private OrderStatus status;
 
     @Column(name = "total_amount", nullable = false)
     private Integer totalAmount;
@@ -48,21 +48,5 @@ public class Orders extends BaseEntity {
 
     @Column(name = "ordered_at", nullable = false)
     private LocalDateTime orderedAt;
-
-    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private OrderAddress orderAddress;
-
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
-
-    public void setOrderAddress(OrderAddress oa) {
-        this.orderAddress = oa;
-        if (oa != null && oa.getOrder() != this) oa.setOrder(this);
-    }
-
-    public void addItem(OrderItem item) {
-        this.items.add(item);
-        if (item.getOrder() != this) item.setOrder(this);
-    }
 
 }

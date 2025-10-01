@@ -7,34 +7,32 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "stock_txn",
+        indexes = @Index(name = "idx_stock_txn_product", columnList = "product_id"))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "stock_txn",
-        indexes = @Index(name = "idx_stock_txn_product", columnList = "product_id"))
 public class StockTxn {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) // ON DELETE CASCADE
-    @JoinColumn(name = "product_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_stock_txn_product"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @ManyToOne(fetch = FetchType.LAZY) // ON DELETE SET NULL
-    @JoinColumn(name = "order_item_id",
-            foreignKey = @ForeignKey(name = "fk_stock_txn_order_item"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id")
     private OrderItem orderItem;
 
     @Column(nullable = false)
-    private Integer delta;
+    private Integer delta;       // 변동 수량 (-3 등)
 
     @Column(nullable = false, length = 32)
-    private String reason;
+    private String reason;       // ORDER, RESTOCK 등
 
     @Column(length = 255)
     private String memo;
@@ -42,3 +40,4 @@ public class StockTxn {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }
+

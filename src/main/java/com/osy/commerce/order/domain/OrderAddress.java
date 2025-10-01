@@ -15,10 +15,9 @@ public class OrderAddress {
     @Column(name = "order_id")
     private Long orderId; // PK=FK
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @MapsId
-    @JoinColumn(name = "order_id",
-            foreignKey = @ForeignKey(name = "fk_order_address_order"))
+    @JoinColumn(name = "order_id")
     private Orders order;
 
     @Column(nullable = false, length = 100)
@@ -30,7 +29,7 @@ public class OrderAddress {
     @Column(length = 20)
     private String zipcode;
 
-    @Column(name = "address1", nullable = false, length = 255)
+    @Column(name = "address1", nullable = false)
     private String address1;
 
     @Column(name = "address2")
