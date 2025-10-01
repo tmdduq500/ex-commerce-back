@@ -7,29 +7,25 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "payment",
         indexes = {
                 @Index(name = "idx_payment_order", columnList = "order_id"),
                 @Index(name = "idx_payment_status", columnList = "status")
         })
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Payment extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) // ON DELETE CASCADE
-    @JoinColumn(name = "order_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_payment_order"))
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
     private Orders order;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private String status;
+    private PaymentStatus status;
 
     @Column(length = 32)
     private String method;
