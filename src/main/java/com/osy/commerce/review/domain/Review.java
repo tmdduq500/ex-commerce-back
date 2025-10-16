@@ -42,5 +42,30 @@ public class Review extends BaseEntity {
 
     @Column(name = "like_count", nullable = false)
     private Integer likeCount;
+
+    public static Review of(User user, Product product, int rating, String title, String content) {
+        return Review.builder()
+                .user(user)
+                .product(product)
+                .rating(rating)
+                .title(title)
+                .content(content)
+                .likeCount(0)
+                .build();
+    }
+
+    public void edit(int rating, String title, String content) {
+        this.rating = rating;
+        this.title = title;
+        this.content = content;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount += 1;
+    }
+
+    public void decreaseLikeCount() {
+        this.likeCount = Math.max(0, this.likeCount - 1);
+    }
 }
 

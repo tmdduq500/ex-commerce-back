@@ -4,7 +4,6 @@ import com.osy.commerce.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
@@ -33,16 +32,3 @@ public class ReviewLike {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Embeddable
-class ReviewLikeId implements Serializable {
-    @Column(name = "user_id")
-    private Long userId;
-    @Column(name = "review_id")
-    private Long reviewId;
-}
-
