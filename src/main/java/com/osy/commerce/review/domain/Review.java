@@ -23,7 +23,7 @@ public class Review extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY) // ON DELETE CASCADE
     @JoinColumn(name = "user_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_review_user"))
+            foreignKey = @ForeignKey(name = "fk_review_users"))
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY) // ON DELETE CASCADE

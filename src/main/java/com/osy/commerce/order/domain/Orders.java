@@ -31,7 +31,7 @@ public class Orders extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY) // ON DELETE RESTRICT
     @JoinColumn(name = "user_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_orders_user"))
+            foreignKey = @ForeignKey(name = "fk_orders_users"))
     private User user;
 
     @Column(nullable = false, length = 32)

@@ -21,7 +21,7 @@ public class ProductLike {
     @MapsId("userId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",
-            foreignKey = @ForeignKey(name = "fk_like_user"))
+            foreignKey = @ForeignKey(name = "fk_like_users"))
     private User user;
 
     @MapsId("productId")

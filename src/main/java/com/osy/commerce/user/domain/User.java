@@ -14,7 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "user",
+@Table(name = "users",
         uniqueConstraints = @UniqueConstraint(name = "uk_user_email", columnNames = "email"))
 public class User extends BaseEntity {
     @Id

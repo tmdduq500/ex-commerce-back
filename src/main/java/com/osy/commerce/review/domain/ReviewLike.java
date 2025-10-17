@@ -20,7 +20,7 @@ public class ReviewLike {
     @MapsId("userId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",
-            foreignKey = @ForeignKey(name = "fk_review_like_user"))
+            foreignKey = @ForeignKey(name = "fk_review_like_users"))
     private User user;
 
     @MapsId("reviewId")

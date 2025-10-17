@@ -22,7 +22,7 @@ public class UserAddress extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY) // ON DELETE CASCADE
     @JoinColumn(name = "user_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_user_address_user"))
+            foreignKey = @ForeignKey(name = "fk_user_address_users"))
     private User user;
 
     @Column(nullable = false, length = 100)

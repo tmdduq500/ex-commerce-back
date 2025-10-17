@@ -27,7 +27,7 @@ public class CouponRedemption {
 
     @ManyToOne(fetch = FetchType.LAZY) // ON DELETE CASCADE
     @JoinColumn(name = "user_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_coupon_redemption_user"))
+            foreignKey = @ForeignKey(name = "fk_coupon_redemption_users"))
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY) // ON DELETE SET NULL

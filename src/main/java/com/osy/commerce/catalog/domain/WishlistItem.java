@@ -21,7 +21,7 @@ public class WishlistItem {
     @MapsId("userId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",
-            foreignKey = @ForeignKey(name = "fk_wish_user"))
+            foreignKey = @ForeignKey(name = "fk_wish_users"))
     private User user;
 
     @MapsId("productId")
