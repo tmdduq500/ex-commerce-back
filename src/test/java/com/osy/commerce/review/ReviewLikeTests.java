@@ -2,13 +2,16 @@ package com.osy.commerce.review;
 
 
 import com.osy.commerce.catalog.domain.Product;
+import com.osy.commerce.catalog.repository.ProductRepository;
 import com.osy.commerce.review.domain.Review;
 import com.osy.commerce.review.domain.ReviewLike;
 import com.osy.commerce.review.domain.ReviewLikeId;
+import com.osy.commerce.review.dto.ReviewLikeRequest;
 import com.osy.commerce.review.repository.ReviewLikeRepository;
 import com.osy.commerce.review.repository.ReviewRepository;
 import com.osy.commerce.review.service.ReviewService;
 import com.osy.commerce.user.domain.User;
+import com.osy.commerce.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +28,12 @@ import static org.mockito.Mockito.*;
 
 
 public class ReviewLikeTests {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ProductRepository productRepository;
 
     @Mock
     private ReviewRepository reviewRepository;
@@ -53,6 +62,7 @@ public class ReviewLikeTests {
                 .rating(5)
                 .likeCount(0)
                 .build();
+        when(userRepository.findById(liker.getId())).thenReturn(Optional.of(liker));
     }
 
     @Test
@@ -61,7 +71,7 @@ public class ReviewLikeTests {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
         when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(false);
 
-        reviewService.likeReview(777L, liker);
+        reviewService.likeReview(new ReviewLikeRequest(777L, liker.getId()));
 
         assertThat(review.getLikeCount()).isEqualTo(1);
 
@@ -78,7 +88,7 @@ public class ReviewLikeTests {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
         when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(true);
 
-        assertThrows(IllegalStateException.class, () -> reviewService.likeReview(777L, liker));
+        assertThrows(IllegalStateException.class, () -> reviewService.likeReview(new ReviewLikeRequest(777L, liker.getId())));
         assertThat(review.getLikeCount()).isEqualTo(0);
         verify(reviewLikeRepository, never()).save(any());
     }
@@ -90,7 +100,7 @@ public class ReviewLikeTests {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
         when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(true);
 
-        reviewService.unlikeReview(777L, liker);
+        reviewService.unlikeReview(new ReviewLikeRequest(777L, liker.getId()));
 
         assertThat(review.getLikeCount()).isEqualTo(0);
         verify(reviewLikeRepository, times(1)).deleteById(new ReviewLikeId(7L, 777L).getReviewId());
@@ -102,7 +112,7 @@ public class ReviewLikeTests {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
         when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(false);
 
-        assertThrows(IllegalStateException.class, () -> reviewService.unlikeReview(777L, liker));
+        assertThrows(IllegalStateException.class, () -> reviewService.unlikeReview(new ReviewLikeRequest(777L, liker.getId())));
         assertThat(review.getLikeCount()).isEqualTo(0);
         verify(reviewLikeRepository, never()).deleteById(any());
     }
