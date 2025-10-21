@@ -1,5 +1,6 @@
 package com.osy.commerce.shipment.service;
 
+import com.osy.commerce.order.domain.OrderStatus;
 import com.osy.commerce.order.domain.Orders;
 import com.osy.commerce.order.repository.OrdersRepository;
 import com.osy.commerce.shipment.domain.Shipment;
@@ -26,6 +27,10 @@ public class ShipmentService {
         Orders orders = ordersRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
+        if (shipmentRepository.findByOrderId(orderId).isPresent()) {
+            throw new IllegalStateException("이미 배송이 시작된 주문입니다.");
+        }
+
         Shipment shipment = Shipment.builder()
                 .order(orders)
                 .status(ShipmentStatus.SHIPPED)
@@ -34,8 +39,8 @@ public class ShipmentService {
                 .shippedAt(LocalDateTime.now())
                 .build();
 
-
         shipmentRepository.save(shipment);
+        orders.setStatus(OrderStatus.SHIPPED);
     }
 
     public ShipmentResponse getShipment(Long orderId) {
@@ -50,5 +55,8 @@ public class ShipmentService {
                 .orElseThrow(() -> new IllegalArgumentException("배송 정보를 찾을 수 없습니다."));
         shipment.setStatus(ShipmentStatus.DELIVERED);
         shipment.setDeliveredAt(LocalDateTime.now());
+
+        Orders order = shipment.getOrder();
+        order.setStatus(OrderStatus.DELIVERED);
     }
 }

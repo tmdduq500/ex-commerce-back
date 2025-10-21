@@ -1,5 +1,6 @@
 package com.osy.commerce.shipment;
 
+import com.osy.commerce.order.domain.OrderStatus;
 import com.osy.commerce.order.domain.Orders;
 import com.osy.commerce.order.repository.OrdersRepository;
 import com.osy.commerce.shipment.domain.Shipment;
@@ -36,7 +37,7 @@ public class ShipmentServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        orders = Orders.builder().id(1L).build();
+        orders = Orders.builder().id(1L).status(OrderStatus.PAID).build();
     }
 
     @Test
@@ -94,5 +95,57 @@ public class ShipmentServiceTest {
         when(shipmentRepository.findByOrderId(99L)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> shipmentService.getShipment(99L));
+    }
+
+    @Test
+    @DisplayName("배송 시작 시 주문 상태도 SHIPPED로 변경")
+    void startShipment_shouldUpdateOrderStatus() {
+        ShipmentStartRequest req = new ShipmentStartRequest();
+        req.setCarrier("CJ대한통운");
+        req.setTrackingNo("1234567890");
+
+
+        when(ordersRepository.findById(1L)).thenReturn(Optional.of(orders));
+        when(shipmentRepository.findByOrderId(1L)).thenReturn(Optional.empty());
+
+        shipmentService.startShipment(1L, req);
+
+        assertThat(orders.getStatus()).isEqualTo(OrderStatus.SHIPPED);
+        verify(shipmentRepository, times(1)).save(any(Shipment.class));
+    }
+
+
+    @Test
+    @DisplayName("배송 완료 시 주문 상태도 DELIVERED로 변경")
+    void completeShipment_shouldUpdateOrderStatus() {
+        Shipment shipment = Shipment.builder()
+                .id(100L)
+                .order(orders)
+                .status(ShipmentStatus.SHIPPED)
+                .build();
+
+
+        when(shipmentRepository.findByOrderId(1L)).thenReturn(Optional.of(shipment));
+
+        shipmentService.completeShipment(1L);
+
+        assertThat(shipment.getStatus()).isEqualTo(ShipmentStatus.DELIVERED);
+        assertThat(orders.getStatus()).isEqualTo(OrderStatus.DELIVERED);
+    }
+
+
+    @Test
+    @DisplayName("배송 시작 실패: 이미 배송된 주문")
+    void startShipment_shouldFailIfDuplicate() {
+        Shipment existing = Shipment.builder().id(2L).order(orders).build();
+
+        when(ordersRepository.findById(1L)).thenReturn(Optional.of(orders));
+        when(shipmentRepository.findByOrderId(1L)).thenReturn(Optional.of(existing));
+
+        ShipmentStartRequest req = new ShipmentStartRequest();
+        req.setCarrier("CJ");
+        req.setTrackingNo("T0000");
+
+        assertThrows(IllegalStateException.class, () -> shipmentService.startShipment(1L, req));
     }
 }
