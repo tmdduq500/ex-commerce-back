@@ -82,7 +82,7 @@ public class ReviewService {
                 .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
         ReviewLikeId reviewLikeId = new ReviewLikeId(user.getId(), review.getId());
-        if (reviewLikeRepository.existsById(reviewLikeId.getReviewId())) {
+        if (reviewLikeRepository.existsById(reviewLikeId)) {
             throw new IllegalStateException("이미 좋아요를 눌렀습니다.");
         }
         ReviewLike like = ReviewLike.builder()
@@ -103,10 +103,10 @@ public class ReviewService {
                 .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
         ReviewLikeId reviewLikeId = new ReviewLikeId(user.getId(), review.getId());
-        if (!reviewLikeRepository.existsById(reviewLikeId.getReviewId())) {
+        if (!reviewLikeRepository.existsById(reviewLikeId)) {
             throw new IllegalStateException("좋아요 상태가 아닙니다.");
         }
-        reviewLikeRepository.deleteById(reviewLikeId.getReviewId());
+        reviewLikeRepository.deleteById(reviewLikeId);
         review.decreaseLikeCount();
     }
 }

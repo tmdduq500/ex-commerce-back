@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +71,7 @@ public class ReviewServiceTest {
         when(reviewRepository.existsByUserAndProduct(user, product)).thenReturn(false);
 
         Review savedReview = Review.of(user, product, rating, "제목", content);
-        savedReview.setId(999L);
+        ReflectionTestUtils.setField(savedReview, "id", 999L);
 
         when(reviewRepository.save(any())).thenReturn(savedReview);
         when(reviewRepository.findById(999L)).thenReturn(Optional.of(savedReview));

@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -69,7 +70,7 @@ public class ReviewLikeTests {
     @DisplayName("리뷰 좋아요 성공: 처음 누르면 likeCount=1")
     void likeReview_success_firstTime() {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
-        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(false);
+        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L))).thenReturn(false);
 
         reviewService.likeReview(new ReviewLikeRequest(777L, liker.getId()));
 
@@ -86,7 +87,7 @@ public class ReviewLikeTests {
     @DisplayName("리뷰 좋아요 중복 방지: 이미 누른 경우 예외")
     void likeReview_duplicate_shouldThrow() {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
-        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(true);
+        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L))).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> reviewService.likeReview(new ReviewLikeRequest(777L, liker.getId())));
         assertThat(review.getLikeCount()).isEqualTo(0);
@@ -96,21 +97,21 @@ public class ReviewLikeTests {
     @Test
     @DisplayName("리뷰 좋아요 취소 성공: 기존 좋아요가 있으면 취소하고 likeCount 감소")
     void unlikeReview_success() {
-        review.setLikeCount(1);
+        ReflectionTestUtils.setField(review, "likeCount", 1);
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
-        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(true);
+        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L))).thenReturn(true);
 
         reviewService.unlikeReview(new ReviewLikeRequest(777L, liker.getId()));
 
         assertThat(review.getLikeCount()).isEqualTo(0);
-        verify(reviewLikeRepository, times(1)).deleteById(new ReviewLikeId(7L, 777L).getReviewId());
+        verify(reviewLikeRepository, times(1)).deleteById(new ReviewLikeId(7L, 777L));
     }
 
     @Test
     @DisplayName("리뷰 좋아요 취소: 좋아요 안한 상태에서 취소 시 예외")
     void unlikeReview_withoutLike_shouldThrow() {
         when(reviewRepository.findById(777L)).thenReturn(Optional.of(review));
-        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L).getReviewId())).thenReturn(false);
+        when(reviewLikeRepository.existsById(new ReviewLikeId(7L, 777L))).thenReturn(false);
 
         assertThrows(IllegalStateException.class, () -> reviewService.unlikeReview(new ReviewLikeRequest(777L, liker.getId())));
         assertThat(review.getLikeCount()).isEqualTo(0);
