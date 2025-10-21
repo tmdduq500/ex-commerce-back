@@ -2,10 +2,12 @@ package com.osy.commerce.user.domain;
 
 import com.osy.commerce.global.jpa.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -51,4 +53,28 @@ public class UserAddress extends BaseEntity {
 
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault;
+
+    public void updateRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void updateZipcode(String zipcode) {
+        this.zipcode = zipcode;
+    }
+
+    public void updateAddress1(String address1) {
+        this.address1 = address1;
+    }
+
+    public void updateAddress2(String address2) {
+        this.address2 = address2;
+    }
+
+    public void updateIsDefault(Boolean isDefault) {
+        this.isDefault = isDefault;
+    }
 }

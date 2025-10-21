@@ -40,7 +40,7 @@ public class ShipmentService {
                 .build();
 
         shipmentRepository.save(shipment);
-        orders.setStatus(OrderStatus.SHIPPED);
+        orders.updateStatus(OrderStatus.SHIPPED);
     }
 
     public ShipmentResponse getShipment(Long orderId) {
@@ -53,10 +53,10 @@ public class ShipmentService {
     public void completeShipment(Long orderId) {
         Shipment shipment = shipmentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("배송 정보를 찾을 수 없습니다."));
-        shipment.setStatus(ShipmentStatus.DELIVERED);
-        shipment.setDeliveredAt(LocalDateTime.now());
+        shipment.updateStatus(ShipmentStatus.DELIVERED);
+        shipment.updateDeliveredAt(LocalDateTime.now());
 
         Orders order = shipment.getOrder();
-        order.setStatus(OrderStatus.DELIVERED);
+        order.updateStatus(OrderStatus.DELIVERED);
     }
 }

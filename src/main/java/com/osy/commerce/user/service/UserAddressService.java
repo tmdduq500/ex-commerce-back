@@ -59,18 +59,18 @@ public class UserAddressService {
         UserAddress a = addressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new ApiException(ApiCode.NOT_FOUND, "주소를 찾을 수 없습니다."));
 
-        if (req.getReceiverName() != null) a.setRecipient(req.getReceiverName());
-        if (req.getReceiverPhone() != null) a.setPhone(req.getReceiverPhone());
-        if (req.getPostalCode() != null) a.setZipcode(req.getPostalCode());
-        if (req.getAddress1() != null) a.setAddress1(req.getAddress1());
-        if (req.getAddress2() != null) a.setAddress2(req.getAddress2());
+        if (req.getReceiverName() != null) a.updateRecipient(req.getReceiverName());
+        if (req.getReceiverPhone() != null) a.updatePhone(req.getReceiverPhone());
+        if (req.getPostalCode() != null) a.updateZipcode(req.getPostalCode());
+        if (req.getAddress1() != null) a.updateAddress1(req.getAddress1());
+        if (req.getAddress2() != null) a.updateAddress2(req.getAddress2());
 
         if (req.getIsDefault() != null) {
             if (req.getIsDefault()) {
                 addressRepository.clearDefaultByUserId(userId);
-                a.setIsDefault(true);
+                a.updateIsDefault(true);
             } else {
-                a.setIsDefault(false);
+                a.updateIsDefault(false);
             }
         }
 
@@ -89,7 +89,7 @@ public class UserAddressService {
             var remain = addressRepository.findAllByUserIdOrderByIsDefaultDescIdDesc(userId);
             if (!remain.isEmpty()) {
                 addressRepository.clearDefaultByUserId(userId);
-                remain.get(0).setIsDefault(true);
+                remain.get(0).updateIsDefault(true);
             }
         }
     }

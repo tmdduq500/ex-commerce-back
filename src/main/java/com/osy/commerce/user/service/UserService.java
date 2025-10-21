@@ -49,7 +49,7 @@ public class UserService {
         if (!passwordEncoder.matches(current, user.getPassword())) {
             throw new ApiException(ApiCode.BAD_CREDENTIALS, "현재 비밀번호가 일치하지 않습니다.");
         }
-        user.setPassword(passwordEncoder.encode(next));
+        user.updatePassword(passwordEncoder.encode(next));
         refreshTokenStore.deleteByUser(userId);
     }
 

@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -54,7 +53,11 @@ public class User extends BaseEntity {
         this.roles.add(r);
     }
 
-    public boolean hasRole(Role r) {
-        return this.roles != null && this.roles.contains(r);
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
+    public void updateLastLoginAt(LocalDateTime time) {
+        this.lastLoginAt = time;
     }
 }

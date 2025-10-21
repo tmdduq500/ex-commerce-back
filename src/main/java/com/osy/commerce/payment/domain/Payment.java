@@ -13,10 +13,14 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_payment_order", columnList = "order_id"),
                 @Index(name = "idx_payment_status", columnList = "status")
         })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Payment extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
@@ -47,4 +51,20 @@ public class Payment extends BaseEntity {
 
     @Column(name = "failed_reason", length = 500)
     private String failedReason;
+
+    public void updateStatus(PaymentStatus status) {
+        this.status = status;
+    }
+
+    public void updateFailedReason(String failedReason) {
+        this.failedReason = failedReason;
+    }
+
+    public void updateApprovedAt(LocalDateTime time) {
+        this.approvedAt = time;
+    }
+
+    public void updatePgTid(String pgTid) {
+        this.pgTid = pgTid;
+    }
 }

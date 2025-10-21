@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -49,4 +48,7 @@ public class Orders extends BaseEntity {
     @Column(name = "ordered_at", nullable = false)
     private LocalDateTime orderedAt;
 
+    public void updateStatus(OrderStatus status) {
+        this.status = status;
+    }
 }

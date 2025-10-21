@@ -92,7 +92,7 @@ public class PaymentService {
                     throw new ApiException(ApiCode.CONFLICT, "재고 부족: " + productId);
                 }
 
-                product.setStock(remain - need);
+                product.updateStock(remain - need);
                 productRepository.save(product);
 
                 stockTxnRepository.save(StockTxn.builder()
@@ -106,15 +106,15 @@ public class PaymentService {
             }
 
             // 결제 확정 및 주문 상태 변경
-            payment.setStatus(PaymentStatus.PAID);
+            payment.updateStatus(PaymentStatus.PAID);
             if (payment.getPgTid() == null) {
-                payment.setPgTid("PG-" + System.currentTimeMillis());
+                payment.updatePgTid("PG-" + System.currentTimeMillis());
             }
-            payment.setApprovedAt(LocalDateTime.now());
-            payment.setFailedReason(null);
+            payment.updateApprovedAt(LocalDateTime.now());
+            payment.updateFailedReason(null);
             paymentRepository.save(payment);
 
-            order.setStatus(OrderStatus.PAID);
+            order.updateStatus(OrderStatus.PAID);
             ordersRepository.save(order);
 
             return PaymentConfirmResponse.from(order, payment);
@@ -160,7 +160,7 @@ public class PaymentService {
             for (OrderItem item : orderItems) {
                 Product product = item.getProduct();
                 int restored = product.getStock() + item.getQuantity();
-                product.setStock(restored);
+                product.updateStock(restored);
                 productRepository.save(product);
 
                 stockTxnRepository.save(StockTxn.builder()
@@ -174,12 +174,12 @@ public class PaymentService {
             }
 
             // 결제 상태/주문 상태 변경
-            p.setStatus(PaymentStatus.CANCELLED);
-            p.setFailedReason(null);
-            p.setApprovedAt(p.getApprovedAt());
+            p.updateStatus(PaymentStatus.CANCELLED);
+            p.updateFailedReason(null);
+            p.updateApprovedAt(p.getApprovedAt());
             paymentRepository.save(p);
 
-            order.setStatus(OrderStatus.CANCELLED);
+            order.updateStatus(OrderStatus.CANCELLED);
             ordersRepository.save(order);
 
             return PaymentCancelResponse.from(order, p);

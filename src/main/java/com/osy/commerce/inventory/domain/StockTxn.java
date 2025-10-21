@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Table(name = "stock_txn",
         indexes = @Index(name = "idx_stock_txn_product", columnList = "product_id"))
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

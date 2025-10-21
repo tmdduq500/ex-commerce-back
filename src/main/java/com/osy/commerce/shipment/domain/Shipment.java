@@ -2,13 +2,13 @@ package com.osy.commerce.shipment.domain;
 
 import com.osy.commerce.global.jpa.BaseEntity;
 import com.osy.commerce.order.domain.Orders;
+import com.osy.commerce.payment.domain.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -42,4 +42,12 @@ public class Shipment extends BaseEntity {
 
     @Column(name = "delivered_at")
     private LocalDateTime deliveredAt;
+
+    public void updateStatus(ShipmentStatus status) {
+        this.status = status;
+    }
+
+    public void updateDeliveredAt(LocalDateTime time) {
+        this.deliveredAt = time;
+    }
 }

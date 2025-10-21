@@ -4,10 +4,12 @@ import com.osy.commerce.catalog.domain.Product;
 import com.osy.commerce.global.jpa.BaseEntity;
 import com.osy.commerce.user.domain.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

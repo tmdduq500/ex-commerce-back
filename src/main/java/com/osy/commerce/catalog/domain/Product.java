@@ -4,8 +4,9 @@ import com.osy.commerce.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -43,4 +44,10 @@ public class Product extends BaseEntity {
 
     @Column(nullable = false, length = 32)
     private String status; // ON|OFF|HIDDEN
+
+    public void updateStock(int stock) {
+        this.stock = stock;
+    }
+
+
 }

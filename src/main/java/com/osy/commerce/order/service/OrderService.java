@@ -92,12 +92,14 @@ public class OrderService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
-        Orders order = new Orders();
-        order.setUser(user);
-        order.setOrderNumber(generateOrderNumber());
-        order.setStatus(OrderStatus.PENDING);
-        order.setTotalAmount(pv.getSummary().getPayable());
-        order.setOrderedAt(LocalDateTime.now());
+        Orders order = Orders.builder()
+                .user(user)
+                .orderNumber(generateOrderNumber())
+                .status(OrderStatus.PENDING)
+                .totalAmount(pv.getSummary().getPayable())
+                .orderedAt(LocalDateTime.now())
+                .build();
+
         ordersRepository.save(order);
 
         UserAddress ua = userAddressRepository.findByIdAndUserId(req.getAddressId(), userId)
@@ -117,13 +119,14 @@ public class OrderService {
         for (var it : pv.getItems()) {
             Product product = productRepository.findById(it.getProductId())
                     .orElseThrow(() -> new ApiException(ApiCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
-            OrderItem oi = new OrderItem();
-            oi.setOrder(order);
-            oi.setProduct(product);
-            oi.setProductName(it.getName());
-            oi.setUnitPrice(it.getUnitPrice());
-            oi.setQuantity(it.getQty());
-            oi.setLineAmount(it.getLineTotal());
+            OrderItem oi = OrderItem.builder()
+                    .order(order)
+                    .product(product)
+                    .productName(it.getName())
+                    .unitPrice(it.getUnitPrice())
+                    .quantity(it.getQty())
+                    .lineAmount(it.getLineTotal())
+                    .build();
             orderItemRepository.save(oi);
         }
 
