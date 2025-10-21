@@ -11,12 +11,12 @@ import com.osy.commerce.review.repository.ReviewRepository;
 import com.osy.commerce.user.domain.User;
 import com.osy.commerce.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,12 +67,11 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
-    public List<ReviewResponse> getReviewsByProduct(Long productId) {
+    public Page<ReviewResponse> getReviewsByProduct(Long productId, Pageable pageable) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-        return reviewRepository.findAllByProduct(product).stream()
-                .map(ReviewResponse::from)
-                .collect(Collectors.toList());
+        return reviewRepository.findAllByProduct(product, pageable)
+                .map(ReviewResponse::from);
     }
 
     @Transactional

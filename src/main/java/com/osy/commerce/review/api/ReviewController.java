@@ -5,10 +5,11 @@ import com.osy.commerce.global.response.Responses;
 import com.osy.commerce.review.dto.*;
 import com.osy.commerce.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reviews")
@@ -47,8 +48,12 @@ public class ReviewController {
     }
 
     @GetMapping("/products/{productId}")
-    public ResponseEntity<ApiResponse> getReviewsByProduct(@PathVariable Long productId) {
-        List<ReviewResponse> reviews = reviewService.getReviewsByProduct(productId);
+    public ResponseEntity<ApiResponse> getReviewsByProduct(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ReviewResponse> reviews = reviewService.getReviewsByProduct(productId, pageable);
         return Responses.ok(reviews);
     }
 }

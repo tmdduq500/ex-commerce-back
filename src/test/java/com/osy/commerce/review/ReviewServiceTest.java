@@ -19,6 +19,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -124,10 +128,14 @@ public class ReviewServiceTest {
     void testListProductReviews() {
         Review r1 = Review.of(user, product, 5, "제목1", "내용1");
         Review r2 = Review.of(user, product, 4, "제목2", "내용2");
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(reviewRepository.findAllByProduct(product)).thenReturn(Arrays.asList(r1, r2));
+        Page<Review> reviewPage = new PageImpl<>(Arrays.asList(r1, r2), pageable, 2);
 
-        List<ReviewResponse> result = reviewService.getReviewsByProduct(product.getId());
+        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+        when(reviewRepository.findAllByProduct(product, pageable)).thenReturn(reviewPage);
+
+        Page<ReviewResponse> result = reviewService.getReviewsByProduct(product.getId(), pageable);
 
         assertThat(result).hasSize(2);
         assertThat(result).extracting("title").contains("제목1", "제목2");
