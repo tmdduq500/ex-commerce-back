@@ -29,7 +29,7 @@ public class Shipment extends BaseEntity {
     private Orders order;
 
     @Column(nullable = false, length = 32)
-    private String status;
+    private ShipmentStatus status;
 
     @Column(length = 64)
     private String carrier;
