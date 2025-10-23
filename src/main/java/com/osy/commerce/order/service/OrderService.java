@@ -21,11 +21,14 @@ import com.osy.commerce.user.domain.UserAddress;
 import com.osy.commerce.user.repository.UserAddressRepository;
 import com.osy.commerce.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -185,6 +188,19 @@ public class OrderService {
                         itemsMap.getOrDefault(o.getId(), List.of())
                 ))
                 .toList();
+    }
+
+    public Page<OrderListResponse> getMyOrders(Long userId, OrderStatus status, Pageable pageable) {
+        Page<Orders> ordersPage = (status != null)
+                ? ordersRepository.findByUserIdAndStatus(userId, status, pageable)
+                : ordersRepository.findByUserId(userId, pageable);
+
+        return ordersPage.map(order -> {
+            List<OrderItem> items = orderItemRepository.findByOrder(order)
+                    .orElse(Collections.emptyList());
+
+            return OrderListResponse.from(order, items);
+        });
     }
 
     private OrderPreviewRequest toPreview(CreateOrderRequest req) {
