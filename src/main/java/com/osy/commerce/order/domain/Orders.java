@@ -1,5 +1,6 @@
 package com.osy.commerce.order.domain;
 
+import com.osy.commerce.coupon.domain.Coupon;
 import com.osy.commerce.global.jpa.BaseEntity;
 import com.osy.commerce.user.domain.User;
 import jakarta.persistence.*;
@@ -36,8 +37,14 @@ public class Orders extends BaseEntity {
     @Column(nullable = false, length = 32)
     private OrderStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
+
     @Column(name = "total_amount", nullable = false)
     private Integer totalAmount;
+
+    private int discountAmount;
 
     @Column(nullable = false, length = 3)
     private String currency;
@@ -50,5 +57,14 @@ public class Orders extends BaseEntity {
 
     public void updateStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public int calculateFinalAmount() {
+        return totalAmount - discountAmount;
+    }
+
+    public void applyCoupon(Coupon coupon, int discountAmount) {
+        this.coupon = coupon;
+        this.discountAmount = discountAmount;
     }
 }

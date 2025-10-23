@@ -28,7 +28,7 @@ public class Coupon extends BaseEntity {
     private String description;
 
     @Column(name = "discount_type", nullable = false, length = 16)
-    private String discountType; // RATE|AMOUNT
+    private DiscountType discountType; // RATE|AMOUNT
 
     @Column(name = "discount_value", nullable = false)
     private Integer discountValue;

@@ -39,5 +39,10 @@ public class CouponRedemption {
     private LocalDateTime redeemedAt;
 
     @Column(nullable = false, length = 16)
-    private String status; // ISSUED|REDEEMED|CANCELLED|EXPIRED
+    private CouponStatus status; // ISSUED|REDEEMED|CANCELLED|EXPIRED
+
+    public void redeem() {
+        this.status = CouponStatus.REDEEMED;
+        this.redeemedAt = LocalDateTime.now();
+    }
 }

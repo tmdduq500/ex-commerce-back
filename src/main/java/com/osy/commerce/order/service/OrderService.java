@@ -2,6 +2,10 @@ package com.osy.commerce.order.service;
 
 import com.osy.commerce.catalog.domain.Product;
 import com.osy.commerce.catalog.repository.ProductRepository;
+import com.osy.commerce.coupon.domain.Coupon;
+import com.osy.commerce.coupon.domain.CouponRedemption;
+import com.osy.commerce.coupon.repository.CouponRepository;
+import com.osy.commerce.coupon.service.CouponService;
 import com.osy.commerce.global.error.ApiException;
 import com.osy.commerce.global.response.ApiCode;
 import com.osy.commerce.order.domain.OrderAddress;
@@ -39,6 +43,8 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderAddressRepository orderAddressRepository;
     private final UserRepository userRepository;
+    private final CouponService couponService;
+    private final CouponRepository couponRepository;
 
     @Transactional
     public OrderPreviewResponse preview(Long userId, OrderPreviewRequest req) {
@@ -70,8 +76,10 @@ public class OrderService {
             subtotal += line;
         }
 
+        Coupon coupon = couponRepository.findByCode(req.getCouponCode())
+                .orElseThrow(() -> new ApiException(ApiCode.NOT_FOUND, "쿠폰이 존재하지 않습니다: "));
         int shipping = calcShipping(subtotal);
-        int discount = calcDiscount(req.getCouponCode(), subtotal);
+        int discount = couponService.calculateDiscount(coupon, subtotal);
         int payable = Math.max(0, subtotal + shipping - discount);
 
         return OrderPreviewResponse.builder()
@@ -99,6 +107,13 @@ public class OrderService {
                 .totalAmount(pv.getSummary().getPayable())
                 .orderedAt(LocalDateTime.now())
                 .build();
+
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
+            CouponRedemption redemption = couponService.validateCouponForOrder(user, req.getCouponCode(), pv.getSummary().getSubtotal());
+            int discount = couponService.calculateDiscount(redemption.getCoupon(), pv.getSummary().getSubtotal());
+            order.applyCoupon(redemption.getCoupon(), discount);
+            couponService.redeemCoupon(redemption);
+        }
 
         ordersRepository.save(order);
 
@@ -172,21 +187,16 @@ public class OrderService {
                 .toList();
     }
 
-
     private OrderPreviewRequest toPreview(CreateOrderRequest req) {
-        OrderPreviewRequest pv = new OrderPreviewRequest();
-        pv.setItems(req.getItems());
-        pv.setAddressId(req.getAddressId());
-        pv.setCouponCode(req.getCouponCode());
-        return pv;
+        return OrderPreviewRequest.builder()
+                .addressId(req.getAddressId())
+                .items(req.getItems())
+                .couponCode(req.getCouponCode())
+                .build();
     }
 
     private int calcShipping(int subtotal) {
         return subtotal >= 50000 ? 0 : 3000;
-    }
-
-    private int calcDiscount(String couponCode, int subtotal) {
-        return 0; // todo 추후 쿠폰 붙일 때 구현
     }
 
     private String generateOrderNumber() {
